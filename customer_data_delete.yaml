@@ -17,7 +17,7 @@ stages:
 
   - stage: OCAPI
     displayName: 'Call OCAPI to Delete Customer'
-    dependsOn: GetOauthToken
+    dependsOn: OauthToken
     jobs:
       - job: DeleteByOCAPI
         pool:
