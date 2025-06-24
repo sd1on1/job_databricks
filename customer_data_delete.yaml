@@ -1,0 +1,40 @@
+trigger:
+  branches:
+    include:
+      - main
+
+stages:
+  - stage: OauthToken
+    displayName: 'Get OAuth Token'
+    jobs:
+      - job: FetchToken
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - script: |
+              echo "Requesting new access token... https://dbc-bd38953b-53cc.commercecloud.salesforce.com/dw/oauth2/access_token"
+            displayName: 'Fetch new OAuth token'
+
+  - stage: OCAPI
+    displayName: 'Call OCAPI to Delete Customer'
+    dependsOn: GetOauthToken
+    jobs:
+      - job: DeleteByOCAPI
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - script: |
+              echo "Deleting customer data https://<instance>.commercecloud.salesforce.com/s/-/dw/data/v23_2/customers/customer_id..."
+            displayName: 'Call OCAPI'
+
+  - stage: CRMSync
+    displayName: 'Stop CRM Sync'
+    dependsOn: OCAPI
+    jobs:
+      - job: UpdateCustomerSyncFlag
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - script: |
+              echo "Trigger Sync ..."
+            displayName: 'Updating customer’s sync flag'
