@@ -1,0 +1,56 @@
+
+trigger:
+  branches:
+    include:
+      - main
+
+stages:
+  - stage: VerifyStoreFront
+    displayName: 'Verify user in StoreFront'
+    jobs:
+      - job: FetchToken
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - script: |
+              echo "Searching for user in Storefront..."
+              echo "Fetching details /dw/shop/v23_2/customers/auth"
+            displayName: 'Validating login credentials'
+
+  - stage: VerifyBusinessManager
+    displayName: 'Verifying customer details in Business Manager'
+    dependsOn: VerifyStoreFront
+    jobs:
+      - job: AccountLockedStatus
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - script: |
+              echo "Validating account status..."
+            displayName: 'Verify Account Status'
+      - job: PasswordStatus
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - script: |
+              echo "Validating password expiry status..."
+            displayName: 'Verify Password Status'
+
+  - stage: AccountUnlock
+    displayName: 'Unlocking customer account in Business Manager'
+    dependsOn: VerifyBusinessManager
+    jobs:
+      - job: ResetLoginCounter
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - script: |
+              echo "Resetting counter ..."
+            displayName: 'Reset Login Counter'
+      - job: TriggerPasswordReset
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - script: |
+              echo "Triggering email to customer to reset password ...POST /dw/shop/v23_2/customers/password/reset "
+            displayName: 'Reset Login Password'
